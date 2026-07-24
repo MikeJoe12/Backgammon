@@ -921,14 +921,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             case 'move-executed': {
                 // Execute move remotely (isRemote = true)
-                game.makeMove(data.from, data.to, true);
+                game.makeMove(data.from, data.to, true, data.usedDie);
                 renderBoard();
+                updateHud();
+                updateButtons();
                 break;
             }
 
             case 'move-undone': {
-                game.undoMove(true);
+                game.undoMove(true, data.die);
                 renderBoard();
+                updateHud();
+                updateButtons();
                 break;
             }
 
@@ -1093,7 +1097,7 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function syncSettingsModalUI() {
         const currentMode = game.gameMode || 'vsAI';
-        ['mode-ai', 'mode-local', 'mode-online'].forEach(id => {
+        ['mode-ai', 'mode-online'].forEach(id => {
             const btn = document.getElementById(id);
             if (!btn) return;
             if (btn.dataset.value === currentMode || (currentMode === 'vsAI' && id === 'mode-ai')) {
@@ -1274,9 +1278,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (id === 'mode-ai') {
                     if (onlineSetupRow) onlineSetupRow.style.display = 'none';
                     if (aiDifficultyRow) aiDifficultyRow.style.display = 'flex';
-                } else if (id === 'mode-local') {
-                    if (onlineSetupRow) onlineSetupRow.style.display = 'none';
-                    if (aiDifficultyRow) aiDifficultyRow.style.display = 'none';
                 }
                 
                 if (id.startsWith('theme-')) {
@@ -1286,7 +1287,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    registerSelectGroup(['mode-ai', 'mode-local', 'mode-online']);
+    registerSelectGroup(['mode-ai', 'mode-online']);
     registerSelectGroup(['diff-easy', 'diff-medium']);
     registerSelectGroup(['theme-obsidian', 'theme-cyberpunk', 'theme-classic']);
 

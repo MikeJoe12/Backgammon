@@ -317,22 +317,25 @@ class BackgammonGame {
      * Executes a move from `from` to `to`. Returns true if successful.
      * @param {number|string} from - Point 1-24 or "bar"
      * @param {number} to - Point 0-25 (0 and 25 represent borne-off)
+     * @param {boolean} isRemote - True if executed via network from opponent
+     * @param {number|null} remoteUsedDie - Die value sent by remote player
      */
-    makeMove(from, to, isRemote = false) {
+    makeMove(from, to, isRemote = false, remoteUsedDie = null) {
         // Find which die value was used
-        let usedDie = -1;
-        if (this.turn === 1) {
-            usedDie = (from === "bar") ? (25 - to) : (from - to);
-        } else {
-            usedDie = (from === "bar") ? to : (to - from);
+        let usedDie = remoteUsedDie;
+        if (usedDie === null || usedDie === undefined) {
+            if (this.turn === 1) {
+                usedDie = (from === "bar") ? (25 - to) : (from - to);
+            } else {
+                usedDie = (from === "bar") ? to : (to - from);
+            }
         }
 
         // For bearing off, the die used might be larger than the exact distance
         let dieIndex = this.remainingMoves.indexOf(usedDie);
         if (dieIndex === -1 && (to === 0 || to === 25)) {
             // Find a die that is larger than the exact distance
-            const exactDist = (this.turn === 1) ? from : (25 - from);
-            // Search for the smallest die that can satisfy the bear-off
+            const exactDist = (this.turn === 1) ? (from === "bar" ? 25 : from) : (from === "bar" ? 25 : (25 - from));
             let bestDie = -1;
             let bestIdx = -1;
             for (let i = 0; i < this.remainingMoves.length; i++) {
@@ -344,12 +347,19 @@ class BackgammonGame {
                     }
                 }
             }
-            usedDie = bestDie;
-            dieIndex = bestIdx;
+            if (bestIdx !== -1) {
+                usedDie = bestDie;
+                dieIndex = bestIdx;
+            }
         }
 
-        if (dieIndex === -1) {
-            return false; // Invalid move distance
+        if (dieIndex === -1 && !isRemote) {
+            return false; // Invalid move distance for local play
+        }
+
+        // If it's a remote move, ensure we consume a die if available
+        if (dieIndex === -1 && isRemote) {
+            dieIndex = 0; // Take available die
         }
 
         // Apply state changes
@@ -358,10 +368,11 @@ class BackgammonGame {
 
         // 1. Remove checker from source
         if (from === "bar") {
-            this.bar[this.turn]--;
-        } else {
+            if (this.bar[this.turn] > 0) this.bar[this.turn]--;
+        } else if (this.board[from]) {
             this.board[from].count--;
-            if (this.board[from].count === 0) {
+            if (this.board[from].count <= 0) {
+                this.board[from].count = 0;
                 this.board[from].player = 0;
             }
         }
@@ -373,7 +384,7 @@ class BackgammonGame {
             if (window.gameAudio) {
                 window.gameAudio.playBearOff();
             }
-        } else {
+        } else if (this.board[to]) {
             const dest = this.board[to];
             if (dest.player === opponent && dest.count === 1) {
                 // Hit! Move opponent to bar
@@ -395,7 +406,9 @@ class BackgammonGame {
         }
 
         // 3. Consume die move
-        this.remainingMoves.splice(dieIndex, 1);
+        if (dieIndex !== -1 && dieIndex < this.remainingMoves.length) {
+            this.remainingMoves.splice(dieIndex, 1);
+        }
 
         // 4. Save to history for undo
         this.history.push({
@@ -426,19 +439,27 @@ class BackgammonGame {
     /**
      * Undoes the last move made in the current turn.
      */
-    undoMove(isRemote = false) {
-        if (this.history.length === 0) return false;
+    undoMove(isRemote = false, remoteDie = null) {
+        if (this.history.length === 0 && !isRemote) return false;
 
-        const lastMove = this.history.pop();
+        let lastMove = this.history.pop();
+        if (!lastMove && isRemote) {
+            // Fallback for remote undo if history wasn't tracked
+            this.updateStatusAfterMove();
+            return true;
+        }
+
         const { from, to, die, wasHit } = lastMove;
+        const usedDie = remoteDie || die;
         const opponent = this.turn === 1 ? 2 : 1;
 
         // 1. Return checker from destination
         if (to === 0 || to === 25) {
-            this.borneOff[this.turn]--;
-        } else {
+            if (this.borneOff[this.turn] > 0) this.borneOff[this.turn]--;
+        } else if (this.board[to]) {
             this.board[to].count--;
-            if (this.board[to].count === 0) {
+            if (this.board[to].count <= 0) {
+                this.board[to].count = 0;
                 this.board[to].player = 0;
             }
         }
@@ -446,20 +467,24 @@ class BackgammonGame {
         // 2. Re-add to source
         if (from === "bar") {
             this.bar[this.turn]++;
-        } else {
+        } else if (this.board[from]) {
             this.board[from].player = this.turn;
             this.board[from].count++;
         }
 
         // 3. Restore hit opponent checker
         if (wasHit) {
-            this.bar[opponent]--;
-            this.board[to].player = opponent;
-            this.board[to].count = 1;
+            if (this.bar[opponent] > 0) this.bar[opponent]--;
+            if (this.board[to]) {
+                this.board[to].player = opponent;
+                this.board[to].count = 1;
+            }
         }
 
         // 4. Restore the die move
-        this.remainingMoves.push(die);
+        if (usedDie) {
+            this.remainingMoves.push(usedDie);
+        }
 
         // Reset Selection
         this.selectedPoint = -1;
@@ -470,7 +495,7 @@ class BackgammonGame {
 
         // Online sync hook trigger
         if (this.gameMode === 'online' && !isRemote && this.onLocalUndoPlayed) {
-            this.onLocalUndoPlayed(die);
+            this.onLocalUndoPlayed(usedDie);
         }
 
         if (window.gameAudio) {
