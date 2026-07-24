@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="manifest.json">
+    <title>MishailGammon - Modern 3D Backgammon</title>
+    <meta name="description" content="Experience backgammon like never before. MishailGammon offers a stunning dark glassmorphic board, realistic 3D dice physics, and a competent AI opponent.">
+    <link rel="stylesheet" href="style.css">
+    <!-- Include Three.js for 3D dice rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <!-- Mobile Portrait Orientation Warning Overlay -->
+    <div id="orientation-warning" class="orientation-warning">
+        <div class="orientation-card">
+            <div class="phone-rotate-anim">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="5" y="2" width="14" height="20" rx="3" ry="3"></rect>
+                    <path d="M12 18h.01"></path>
+                    <path d="M19 9l3 3-3 3"></path>
+                    <path d="M22 12H12"></path>
+                </svg>
+            </div>
+            <h2>Please Rotate Your Device</h2>
+            <p>MishailGammon is designed for horizontal (landscape) play to give you a full screen experience. Turn your phone sideways to start!</p>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Top Header Panel (combining HUD and settings icon) -->
+        <header class="game-header">
+            <div class="header-logo">
+                <h1>MishailGammon</h1>
+                <p>Play Local & Online</p>
+            </div>
+
+            <div class="header-status-panel">
+                <!-- Score P1 -->
+                <div id="p1-status" class="player-status active">
+                    <div class="player-indicator p1">
+                        <div class="dot-icon"></div>
+                        <span id="p1-name" class="name">Player 1 (Black)</span>
+                    </div>
+                    <span id="p1-score" class="score-badge">0 pts</span>
+                </div>
+
+                <!-- Status Banner (Turn Indicator) -->
+                <div id="status-banner" class="status-banner">
+                    Select game mode and roll to begin!
+                </div>
+
+                <!-- Score P2 -->
+                <div id="p2-status" class="player-status">
+                    <div class="player-indicator p2">
+                        <div class="dot-icon"></div>
+                        <span id="p2-name" class="name">AI Opponent (White)</span>
+                    </div>
+                    <span id="p2-score" class="score-badge">0 pts</span>
+                </div>
+            </div>
+
+            <div class="header-controls">
+                <!-- Multiplayer Lobby Panel (Only visible in online mode) -->
+                <div id="online-lobby-panel" class="online-lobby-panel" style="display: none;">
+                    <span class="lobby-label">Room Code:</span>
+                    <span id="room-code-display" class="room-code-display">----</span>
+                </div>
+
+                <!-- Fullscreen Toggle Icon -->
+                <button id="btn-fullscreen" class="btn btn-settings-icon" title="Toggle Fullscreen">
+                    <svg class="fs-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                    </svg>
+                    <svg class="fs-close" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display: none;">
+                        <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
+                    </svg>
+                </button>
+
+                <!-- Compact Settings Icon -->
+                <button id="btn-settings" class="btn btn-settings-icon" title="Game Settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Backgammon Board -->
+        <main class="board-container">
+            <!-- Contextual Controls Overlay -->
+            <div id="board-controls" class="board-controls-overlay">
+                <button id="btn-roll" class="btn btn-primary board-control-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <circle cx="15.5" cy="15.5" r="1.5"></circle>
+                        <circle cx="15.5" cy="8.5" r="1.5"></circle>
+                        <circle cx="8.5" cy="15.5" r="1.5"></circle>
+                    </svg>
+                    Roll Dice
+                </button>
+                
+                <button id="btn-undo" class="btn board-control-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M3 7v6h6"></path>
+                        <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+                    </svg>
+                    Undo Moves
+                </button>
+                
+                <button id="btn-end-turn" class="btn btn-primary board-control-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                    End Turn
+                </button>
+            </div>
+
+            <!-- 3D Dice rendering overlay container -->
+            <div id="dice-3d-container"></div>
+            
+            <!-- Game Board grid layout -->
+            <div id="game-board" class="board-outer">
+                <!-- Generated dynamically via JS -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="modal-settings" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Game Settings</h2>
+                <span id="close-settings" class="modal-close">&times;</span>
+            </div>
+            
+            <div class="setting-row">
+                <label>Game Mode</label>
+                <div class="select-group" style="grid-template-columns: repeat(3, 1fr);">
+                    <button id="mode-ai" class="select-option selected" data-value="vsAI" style="padding: 10px 4px; font-size: 13px;">Vs AI</button>
+                    <button id="mode-local" class="select-option" data-value="local" style="padding: 10px 4px; font-size: 13px;">Local 2P</button>
+                    <button id="mode-online" class="select-option" data-value="online" style="padding: 10px 4px; font-size: 13px;">Online</button>
+                </div>
+            </div>
+
+            <!-- Online setup row (hidden by default) -->
+            <div id="online-setup-row" class="setting-row" style="display: none; border-top: 1px solid var(--panel-border); padding-top: 10px;">
+                <div class="room-input-group">
+                    <label>Enter Room Code (to join)</label>
+                    <input type="text" id="join-room-code" placeholder="CODE" maxlength="4" style="width: 100%; margin-bottom: 8px;">
+                </div>
+                <div class="select-group" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button id="btn-create-lobby" class="btn btn-primary" style="font-size: 13px; padding: 10px 4px;">Create Room</button>
+                    <button id="btn-join-lobby" class="btn" style="font-size: 13px; padding: 10px 4px;">Join Room</button>
+                </div>
+            </div>
+
+            <div id="ai-difficulty-row" class="setting-row">
+                <label>AI Difficulty</label>
+                <div class="select-group">
+                    <button id="diff-easy" class="select-option" data-value="easy">Easy Heuristic</button>
+                    <button id="diff-medium" class="select-option selected" data-value="medium">Medium Heuristic</button>
+                </div>
+            </div>
+
+            <div class="setting-row">
+                <label>Board Theme</label>
+                <div class="select-group" style="grid-template-columns: repeat(3, 1fr);">
+                    <button id="theme-obsidian" class="select-option selected" data-value="default" style="padding: 10px 4px; font-size: 13px;">Obsidian</button>
+                    <button id="theme-cyberpunk" class="select-option" data-value="cyberpunk" style="padding: 10px 4px; font-size: 13px;">Cyberpunk</button>
+                    <button id="theme-classic" class="select-option" data-value="classic" style="padding: 10px 4px; font-size: 13px;">Mahogany</button>
+                </div>
+            </div>
+
+            <div class="setting-row">
+                <label class="checkbox-row">
+                    <input type="checkbox" id="check-audio" checked>
+                    Enable Sound Effects
+                </label>
+            </div>
+
+            <div class="setting-row">
+                <label class="checkbox-row">
+                    <input type="checkbox" id="check-wake-lock" checked>
+                    Keep Screen On
+                </label>
+            </div>
+
+            <button id="btn-save-settings" class="btn btn-primary" style="margin-top: 10px;">Apply Settings & Start Game</button>
+            <button id="btn-reset-score" class="btn" style="margin-top: 6px; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #f87171;">Reset Match Score (0 - 0)</button>
+        </div>
+    </div>
+
+    <!-- Victory Celebration Modal -->
+    <div id="modal-victory" class="modal-overlay">
+        <div class="modal-content victory-card">
+            <div class="trophy-anim">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                    <path d="M4 22h16"></path>
+                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path>
+                </svg>
+            </div>
+            <h2 id="victory-title">🎉 Player 1 Wins!</h2>
+            <div id="victory-subtitle" class="victory-subtitle">GAMMON VICTORY (+2 Points)</div>
+            <p id="victory-desc" style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Player 2 had 0 checkers borne off!</p>
+            
+            <div class="victory-scores-panel">
+                <div class="victory-score-box">
+                    <span class="v-name">Player 1</span>
+                    <span id="v-score-p1" class="v-score">0</span>
+                </div>
+                <div class="v-vs" style="font-weight: 800; color: var(--text-secondary);">VS</div>
+                <div class="victory-score-box">
+                    <span id="v-p2-name" class="v-name">AI Opponent</span>
+                    <span id="v-score-p2" class="v-score">0</span>
+                </div>
+            </div>
+
+            <div class="victory-actions">
+                <button id="btn-victory-rematch" class="btn btn-primary" style="flex: 1;">Play Next Round 🎲</button>
+                <button id="btn-victory-close" class="btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Script Imports -->
+    <script src="audio.js"></script>
+    <script src="dice3d.js"></script>
+    <script src="game.js"></script>
+    <script src="app.js"></script>
+
+</body>
+</html>
