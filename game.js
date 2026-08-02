@@ -634,15 +634,24 @@ class BackgammonGame {
                 return;
             }
 
-            // Execute moves sequentially with a nice visual delay
+            // Execute moves sequentially with smooth animated gliding motion
             let step = 0;
             const executeStep = () => {
                 if (step < bestSequence.length) {
                     const move = bestSequence[step];
-                    this.makeMove(move.from, move.to);
-                    onMoveComplete(); // Update UI
-                    step++;
-                    setTimeout(executeStep, 900); // 900ms delay between AI checker movements
+                    if (typeof window !== 'undefined' && typeof window.animateCheckerMove === 'function') {
+                        window.animateCheckerMove(move.from, move.to, () => {
+                            this.makeMove(move.from, move.to);
+                            onMoveComplete(); // Update UI
+                            step++;
+                            setTimeout(executeStep, 400);
+                        });
+                    } else {
+                        this.makeMove(move.from, move.to);
+                        onMoveComplete(); // Update UI
+                        step++;
+                        setTimeout(executeStep, 800);
+                    }
                 } else {
                     this.isAiThinking = false;
                     onTurnComplete(); // Wrap up AI turn

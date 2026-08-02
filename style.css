@@ -7,42 +7,52 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
 
 :root {
-    /* Theme: Midnight Obsidian (Default) */
-    --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-    --panel-bg: rgba(30, 41, 59, 0.45);
-    --panel-border: rgba(255, 255, 255, 0.08);
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
+    /* Theme: Realistic Golden Oak (Matching Attachment Photo) */
+    --frame-wood-light: #dba05b;
+    --frame-wood-mid: #b57434;
+    --frame-wood-dark: #7a4115;
+    --frame-wood-deep: #442007;
+
+    --bg-gradient: linear-gradient(135deg, #120b06 0%, #28170b 50%, #120b06 100%);
+    --panel-bg: rgba(45, 26, 13, 0.65);
+    --panel-border: rgba(212, 160, 95, 0.25);
+    --text-primary: #f7f1e5;
+    --text-secondary: #d4c0aa;
     
-    /* Board colors */
-    --board-bg: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
-    --board-border: #334155;
-    --point-even: linear-gradient(to bottom, #3b82f6 0%, #1d4ed8 100%);
-    --point-odd: linear-gradient(to bottom, #1e293b 0%, #334155 100%);
-    --point-even-reverse: linear-gradient(to top, #3b82f6 0%, #1d4ed8 100%);
-    --point-odd-reverse: linear-gradient(to top, #1e293b 0%, #334155 100%);
+    /* Board background & points matching attachment */
+    --board-bg: linear-gradient(180deg, #181512 0%, #100e0c 100%);
+    --board-border: #b57434;
+    --point-even: linear-gradient(180deg, #f5ecd8 0%, #e6d3b4 60%, #cca97e 100%); /* Light Birch / Ivory */
+    --point-odd: linear-gradient(180deg, #88481e 0%, #683210 60%, #4a2007 100%);  /* Dark Walnut */
+    --point-even-reverse: linear-gradient(0deg, #f5ecd8 0%, #e6d3b4 60%, #cca97e 100%);
+    --point-odd-reverse: linear-gradient(0deg, #88481e 0%, #683210 60%, #4a2007 100%);
     
-    /* Player colors */
-    --player1-color: #ef4444; /* Neon Crimson */
-    --player1-glow: rgba(239, 68, 68, 0.65);
-    --player1-gradient: radial-gradient(circle at 35% 35%, #ff8585 0%, #ef4444 60%, #991b1b 100%);
+    /* Player checkers matching attachment photo */
+    --player1-color: #382419; /* Dark Walnut Wood */
+    --player1-glow: rgba(0, 0, 0, 0.8);
+    --player1-gradient: radial-gradient(circle at 35% 35%, #5a3c2a 0%, #362214 45%, #1e1109 80%, #0d0603 100%);
     
-    --player2-color: #e2e8f0; /* Pearl White */
-    --player2-glow: rgba(226, 232, 240, 0.65);
-    --player2-gradient: radial-gradient(circle at 35% 35%, #ffffff 0%, #e2e8f0 70%, #64748b 100%);
+    --player2-color: #f7ede0; /* Ivory Birch Wood */
+    --player2-glow: rgba(247, 237, 224, 0.7);
+    --player2-gradient: radial-gradient(circle at 35% 35%, #ffffff 0%, #f6e9d2 45%, #ded0b4 80%, #ba9f7b 100%);
 
     /* UI accent colors */
-    --accent: #10b981; /* Emerald Green */
-    --accent-glow: rgba(16, 185, 129, 0.4);
+    --accent: #d97706;
+    --accent-glow: rgba(217, 119, 6, 0.4);
     
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
-    --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
     --glass-blur: blur(16px);
 }
 
 /* Theme: Cyberpunk Neon */
 [data-theme="cyberpunk"] {
+    --frame-wood-light: #ff007f;
+    --frame-wood-mid: #b0005a;
+    --frame-wood-dark: #600030;
+    --frame-wood-deep: #250015;
+
     --bg-gradient: linear-gradient(135deg, #050510 0%, #150025 100%);
     --panel-bg: rgba(25, 0, 40, 0.5);
     --panel-border: rgba(255, 0, 128, 0.15);
@@ -68,20 +78,25 @@
     --accent-glow: rgba(245, 158, 11, 0.4);
 }
 
-/* Theme: Classic Mahogany (Matching User Photo) */
+/* Theme: Classic Mahogany */
 [data-theme="classic"] {
+    --frame-wood-light: #9c4c23;
+    --frame-wood-mid: #783412;
+    --frame-wood-dark: #4d1d07;
+    --frame-wood-deep: #2b0c02;
+
     --bg-gradient: linear-gradient(135deg, #140b06 0%, #29160a 100%);
     --panel-bg: rgba(50, 28, 14, 0.65);
     --panel-border: rgba(180, 120, 60, 0.25);
     --text-primary: #f5efe6;
     --text-secondary: #d4c3b3;
     
-    --board-bg: linear-gradient(180deg, #964f22 0%, #7d3f1a 50%, #964f22 100%);
-    --board-border: #52270b;
-    --point-even: linear-gradient(to bottom, #1e1d1a 0%, #100f0e 100%);
-    --point-odd: linear-gradient(to bottom, #f2e3c6 0%, #d8c29d 100%);
-    --point-even-reverse: linear-gradient(to top, #1e1d1a 0%, #100f0e 100%);
-    --point-odd-reverse: linear-gradient(to top, #f2e3c6 0%, #d8c29d 100%);
+    --board-bg: linear-gradient(180deg, #141210 0%, #0c0a09 100%);
+    --board-border: #783412;
+    --point-even: linear-gradient(to bottom, #f7efe2 0%, #c4b096 100%);
+    --point-odd: linear-gradient(to bottom, #6b2d0d 0%, #2e1002 100%);
+    --point-even-reverse: linear-gradient(to top, #f7efe2 0%, #c4b096 100%);
+    --point-odd-reverse: linear-gradient(to top, #6b2d0d 0%, #2e1002 100%);
     
     --player1-color: #1a1a1a; /* Polished Ebony Black */
     --player1-glow: rgba(0, 0, 0, 0.7);
@@ -422,9 +437,23 @@ html, body {
 
 .board-outer {
     background: var(--board-bg);
-    border: 6px solid var(--board-border);
-    box-shadow: var(--shadow-lg);
-    border-radius: 12px;
+    /* Realistic 3D Wooden Case Frame with Mitered Corners */
+    padding: clamp(6px, 1.2vw, 14px);
+    border: clamp(14px, 2.2vw, 26px) solid transparent;
+    border-image: linear-gradient(135deg, 
+        var(--frame-wood-light) 0%, 
+        var(--frame-wood-mid) 28%, 
+        var(--frame-wood-dark) 72%, 
+        var(--frame-wood-deep) 100%) 1;
+    box-shadow: 
+        /* Outer edge specular highlight */
+        inset 0 0 0 2px rgba(255, 240, 210, 0.35),
+        /* Inset drop shadow around the playing surface */
+        inset 0 0 18px 6px rgba(0, 0, 0, 0.85),
+        /* Deep 3D drop shadow underneath the entire board case */
+        0 24px 60px rgba(0, 0, 0, 0.9),
+        0 6px 16px rgba(0, 0, 0, 0.7);
+    border-radius: 4px;
     height: 100%;
     width: 100%;
     max-height: 100%;
@@ -434,32 +463,131 @@ html, body {
     grid-template-columns: repeat(6, 1fr) 4.4% repeat(6, 1fr) 4.8%;
     grid-template-rows: 1fr 1fr;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     margin: auto;
     box-sizing: border-box;
 }
 
-/* Outer Board Dividers */
+/* Outer Board Dividers & Central Wooden Bar */
 .bar-divider {
     grid-column: 7;
     grid-row: 1 / span 2;
-    background: var(--board-border);
-    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.6);
+    background: linear-gradient(90deg, 
+        var(--frame-wood-dark) 0%, 
+        var(--frame-wood-mid) 25%, 
+        var(--frame-wood-light) 48%, 
+        #2a1405 50%, /* Center folding split seam */
+        var(--frame-wood-light) 52%, 
+        var(--frame-wood-mid) 75%, 
+        var(--frame-wood-dark) 100%);
+    box-shadow: 
+        inset 2px 0 6px rgba(0, 0, 0, 0.6),
+        inset -2px 0 6px rgba(0, 0, 0, 0.6),
+        0 0 12px rgba(0, 0, 0, 0.7);
     display: flex;
     flex-direction: column;
     justify-content: space-around;
     align-items: center;
     position: relative;
-    z-index: 2;
+    z-index: 5;
     height: 100%;
     min-height: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+}
+
+/* Metallic Brass Hinges on Central Divider */
+.board-hinge {
+    width: clamp(26px, 3.8vw, 44px);
+    height: clamp(12px, 1.8vh, 18px);
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 12;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+    background: linear-gradient(135deg, #fff0aa 0%, #ffd700 30%, #c59b27 65%, #7a5a07 100%);
+    border-radius: 3px;
+    border: 1px solid #7a5c07;
+    box-shadow: 
+        0 3px 6px rgba(0, 0, 0, 0.75),
+        inset 0 1px 2px rgba(255, 255, 255, 0.9),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.7);
+    pointer-events: none;
+}
+
+.hinge-top {
+    top: 2px;
+}
+
+.hinge-bottom {
+    bottom: 2px;
+}
+
+.hinge-pin {
+    width: clamp(4px, 0.6vw, 7px);
+    height: 115%;
+    background: linear-gradient(90deg, #5c4305 0%, #fff5cc 40%, #d4af37 70%, #473404 100%);
+    border-radius: 2px;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+}
+
+.hinge-screw {
+    width: clamp(4px, 0.6vw, 7px);
+    height: clamp(4px, 0.6vw, 7px);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffffff 0%, #d4af37 50%, #5c4305 100%);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.8), 0 1px 1px rgba(255,255,255,0.4);
+    position: relative;
+}
+
+.hinge-screw::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 15%;
+    width: 70%;
+    height: 1px;
+    background: #3d2b02;
+    transform: translateY(-50%) rotate(45deg);
+}
+
+/* Outer Side Handle Notches (Carved Finger Grips) */
+.frame-handle {
+    position: absolute;
+    top: 50%;
+    width: clamp(5px, 0.8vw, 10px);
+    height: clamp(50px, 14vh, 95px);
+    transform: translateY(-50%);
+    border-radius: 10px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.frame-handle-left {
+    left: calc(clamp(14px, 2.2vw, 26px) * -0.65);
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.7) 0%, rgba(255, 255, 255, 0.2) 100%);
+    box-shadow: inset -2px 0 4px rgba(0, 0, 0, 0.8);
+}
+
+.frame-handle-right {
+    right: calc(clamp(14px, 2.2vw, 26px) * -0.65);
+    background: linear-gradient(-90deg, rgba(0, 0, 0, 0.7) 0%, rgba(255, 255, 255, 0.2) 100%);
+    box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.8);
 }
 
 .bear-off-divider {
     grid-column: 14;
     grid-row: 1 / span 2;
-    background: var(--board-border);
-    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.6);
+    background: linear-gradient(180deg, 
+        var(--frame-wood-dark) 0%, 
+        var(--frame-wood-mid) 50%, 
+        var(--frame-wood-dark) 100%);
+    box-shadow: 
+        inset 2px 0 8px rgba(0, 0, 0, 0.7),
+        inset -2px 0 8px rgba(0, 0, 0, 0.7);
     display: flex;
     flex-direction: column;
     justify-content: space-around;
@@ -468,6 +596,7 @@ html, body {
     z-index: 2;
     height: 100%;
     min-height: 0;
+    border-left: 2px solid rgba(0, 0, 0, 0.4);
 }
 
 /* Board Points (Triangles) */
@@ -635,38 +764,7 @@ html, body {
     background: radial-gradient(circle at 35% 35%, #ffffff 0%, #eee5d6 70%, #d5c5ad 100%);
 }
 
-/* Center Diamond Inlays on Board (matching user photo) */
-[data-theme="classic"] .board-outer::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 22.7%;
-    width: clamp(38px, 11vh, 80px);
-    aspect-ratio: 1;
-    transform: translate(-50%, -50%) rotate(45deg);
-    background: #191816;
-    border: 3px solid #f2e3c6;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
-    z-index: 1;
-    pointer-events: none;
-    opacity: 0.88;
-}
 
-[data-theme="classic"] .board-outer::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 72.7%;
-    width: clamp(38px, 11vh, 80px);
-    aspect-ratio: 1;
-    transform: translate(-50%, -50%) rotate(45deg);
-    background: #191816;
-    border: 3px solid #f2e3c6;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
-    z-index: 1;
-    pointer-events: none;
-    opacity: 0.88;
-}
 
 /* Glowing border for selectable checkers */
 .checker.selectable {
@@ -1091,4 +1189,88 @@ html, body {
     gap: 10px;
     width: 100%;
     justify-content: center;
+}
+
+/* --- Drag and Drop Checker Interaction Styles --- */
+body.is-dragging-checker,
+body.is-dragging-checker * {
+    cursor: grabbing !important;
+    user-select: none !important;
+}
+
+.checker.selectable {
+    touch-action: none;
+    cursor: grab;
+}
+
+.checker.selectable:active {
+    cursor: grabbing;
+}
+
+.checker.is-dragging-origin {
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+#drag-avatar {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    box-sizing: border-box !important;
+    aspect-ratio: 1 / 1 !important;
+    pointer-events: none !important;
+    z-index: 99999 !important;
+    transform: translate(-50%, -50%) !important;
+    box-shadow: 
+        0 14px 35px rgba(0, 0, 0, 0.85),
+        inset 0 2px 3px rgba(255, 255, 255, 0.4),
+        inset 0 -3px 5px rgba(0, 0, 0, 0.5);
+    border-radius: 50% !important;
+    will-change: transform, left, top;
+    display: none;
+    margin: 0 !important;
+}
+
+#drag-avatar.p1 {
+    background: var(--player1-gradient) !important;
+}
+
+#drag-avatar.p2 {
+    background: var(--player2-gradient) !important;
+}
+
+#drag-avatar::after {
+    content: '';
+    position: absolute;
+    top: 18%;
+    left: 18%;
+    width: 64%;
+    height: 64%;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+.point.drop-hover::before {
+    opacity: 1 !important;
+    filter: brightness(1.45) drop-shadow(0 0 20px var(--accent)) !important;
+    transform: scaleX(1.14) !important;
+}
+
+.bear-off-zone.drop-hover {
+    border-color: var(--accent) !important;
+    background: rgba(217, 119, 6, 0.3) !important;
+    box-shadow: 0 0 22px var(--accent-glow) !important;
+    transform: scale(1.06);
+}
+
+/* Flying Motion Gliding Animation for Checker Moves */
+.checker-motion-flying {
+    position: fixed !important;
+    pointer-events: none !important;
+    z-index: 20000 !important;
+    will-change: top, left, transform;
+    border-radius: 50% !important;
 }

@@ -118,6 +118,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function buildBoardGrid() {
         boardEl.innerHTML = '';
 
+        // Outer Frame Handle Notches for realistic wooden case look
+        const handleLeft = document.createElement('div');
+        handleLeft.className = 'frame-handle frame-handle-left';
+        boardEl.appendChild(handleLeft);
+
+        const handleRight = document.createElement('div');
+        handleRight.className = 'frame-handle frame-handle-right';
+        boardEl.appendChild(handleRight);
+
         // --- ROW 1 (TOP HALF of board: points 13 to 18, Bar, points 19 to 24, Bear off P2) ---
         // Left Quadrant: points 13 to 18
         for (let p = 13; p <= 18; p++) {
@@ -129,19 +138,31 @@ document.addEventListener('DOMContentLoaded', () => {
         barDivider.className = 'bar-divider';
         barDivider.id = 'bar-divider';
         
-        // P1 (Red) Bar Zone (Top)
+        // Top Brass Hinge
+        const hingeTop = document.createElement('div');
+        hingeTop.className = 'board-hinge hinge-top';
+        hingeTop.innerHTML = '<span class="hinge-screw screw-left"></span><span class="hinge-pin"></span><span class="hinge-screw screw-right"></span>';
+        barDivider.appendChild(hingeTop);
+
+        // P1 Bar Zone (Top)
         const barP1 = document.createElement('div');
         barP1.className = 'bar-zone top-bar';
         barP1.id = 'bar-p1';
         barP1.dataset.point = 'bar1';
         barDivider.appendChild(barP1);
 
-        // P2 (White) Bar Zone (Bottom)
+        // P2 Bar Zone (Bottom)
         const barP2 = document.createElement('div');
         barP2.className = 'bar-zone bottom-bar';
         barP2.id = 'bar-p2';
         barP2.dataset.point = 'bar2';
         barDivider.appendChild(barP2);
+
+        // Bottom Brass Hinge
+        const hingeBottom = document.createElement('div');
+        hingeBottom.className = 'board-hinge hinge-bottom';
+        hingeBottom.innerHTML = '<span class="hinge-screw screw-left"></span><span class="hinge-pin"></span><span class="hinge-screw screw-right"></span>';
+        barDivider.appendChild(hingeBottom);
 
         boardEl.appendChild(barDivider);
 
@@ -212,6 +233,292 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
+    // ====================== DRAG AND DROP CONTROLLER =========================
+    // =========================================================================
+
+    let isDraggingChecker = false;
+    let dragSourcePoint = null;
+    let dragStartPos = { x: 0, y: 0 };
+    let dragAvatarEl = null;
+    let currentHoverTargetEl = null;
+
+    function getOrCreateDragAvatar() {
+        if (!dragAvatarEl) {
+            dragAvatarEl = document.getElementById('drag-avatar');
+            if (!dragAvatarEl) {
+                dragAvatarEl = document.createElement('div');
+                dragAvatarEl.id = 'drag-avatar';
+                dragAvatarEl.style.display = 'none';
+                document.body.appendChild(dragAvatarEl);
+            }
+        }
+        return dragAvatarEl;
+    }
+
+    function getDisplayPointFromInternal(internalP) {
+        const isFlipped = (game.gameMode === 'online' && game.myPlayerId === 2);
+        return isFlipped ? (25 - internalP) : internalP;
+    }
+
+    function getInternalPointFromDisplay(displayP) {
+        const isFlipped = (game.gameMode === 'online' && game.myPlayerId === 2);
+        return isFlipped ? (25 - displayP) : displayP;
+    }
+
+    function attachDragListeners(checkerEl, fromPoint) {
+        checkerEl.addEventListener('pointerdown', (e) => {
+            if (e.button !== undefined && e.button !== 0) return;
+            if (game.isAiThinking || game.isGameOver) return;
+
+            e.stopPropagation();
+
+            // 1. Measure real checker dimensions BEFORE renderBoard detaches element from DOM!
+            const origRect = checkerEl.getBoundingClientRect();
+            const realWidth = origRect.width > 10 ? origRect.width : 54;
+            const realHeight = origRect.height > 10 ? origRect.height : realWidth;
+
+            // 2. Set selection state and valid destination targets
+            game.selectedPoint = fromPoint;
+            game.validMoves = game.getValidMovesForPoint(fromPoint);
+            renderBoard();
+
+            isDraggingChecker = true;
+            dragSourcePoint = fromPoint;
+            dragStartPos = { x: e.clientX, y: e.clientY };
+            document.body.classList.add('is-dragging-checker');
+
+            const avatar = getOrCreateDragAvatar();
+
+            let playerClass = 'p1';
+            if (fromPoint === "bar") {
+                playerClass = checkerEl.classList.contains('p1') ? 'p1' : 'p2';
+            } else if (game.board[fromPoint]) {
+                playerClass = `p${game.board[fromPoint].player}`;
+            }
+
+            avatar.className = playerClass;
+            avatar.style.width = `${realWidth}px`;
+            avatar.style.height = `${realHeight}px`;
+            avatar.style.left = `${e.clientX}px`;
+            avatar.style.top = `${e.clientY}px`;
+            avatar.style.display = 'block';
+
+            // Mark origin checkers as dragging origin
+            const originContainer = (fromPoint === "bar") 
+                ? (checkerEl.parentElement) 
+                : document.getElementById(`point-${getDisplayPointFromInternal(fromPoint)}`);
+            if (originContainer) {
+                const sel = originContainer.querySelector('.checker.selectable');
+                if (sel) sel.classList.add('is-dragging-origin');
+            }
+
+            window.addEventListener('pointermove', onCheckerPointerMove, { passive: false });
+            window.addEventListener('pointerup', onCheckerPointerUp);
+            window.addEventListener('pointercancel', onCheckerPointerUp);
+        });
+    }
+
+    function onCheckerPointerMove(e) {
+        if (!isDraggingChecker) return;
+        e.preventDefault();
+
+        const avatar = getOrCreateDragAvatar();
+        avatar.style.left = `${e.clientX}px`;
+        avatar.style.top = `${e.clientY}px`;
+
+        const elUnder = document.elementFromPoint(e.clientX, e.clientY);
+
+        if (currentHoverTargetEl) {
+            currentHoverTargetEl.classList.remove('drop-hover');
+            currentHoverTargetEl = null;
+        }
+
+        if (!elUnder) return;
+
+        const targetPointEl = elUnder.closest('.point');
+        const targetBearEl = elUnder.closest('.bear-off-zone');
+
+        if (targetPointEl) {
+            const displayP = parseInt(targetPointEl.dataset.point, 10);
+            const internalP = getInternalPointFromDisplay(displayP);
+            if (game.validMoves.includes(internalP)) {
+                targetPointEl.classList.add('drop-hover');
+                currentHoverTargetEl = targetPointEl;
+            }
+        } else if (targetBearEl) {
+            const targetVal = parseInt(targetBearEl.dataset.point, 10);
+            if (game.validMoves.includes(targetVal)) {
+                targetBearEl.classList.add('drop-hover');
+                currentHoverTargetEl = targetBearEl;
+            }
+        }
+    }
+
+    /**
+     * Glides a checker in smooth continuous motion from source point to destination point.
+     */
+    function animateCheckerMove(fromPoint, toPoint, onComplete) {
+        // Measure real rendered checker diameter on board
+        const activeCheckers = document.querySelectorAll('.checker:not(#drag-avatar)');
+        let realWidth = 52;
+        let realHeight = 52;
+        for (const ch of activeCheckers) {
+            const r = ch.getBoundingClientRect();
+            if (r.width > 10) {
+                realWidth = r.width;
+                realHeight = r.height || r.width;
+                break;
+            }
+        }
+
+        // Calculate start position
+        let fromX = window.innerWidth / 2;
+        let fromY = window.innerHeight / 2;
+
+        if (fromPoint === "bar") {
+            const player = game.turn;
+            const barEl = (player === 1) ? document.getElementById('bar-p1') : document.getElementById('bar-p2');
+            if (barEl) {
+                const rect = barEl.getBoundingClientRect();
+                fromX = rect.left + rect.width / 2;
+                fromY = rect.top + rect.height / 2;
+            }
+        } else {
+            const displayFromP = getDisplayPointFromInternal(fromPoint);
+            const pointEl = document.getElementById(`point-${displayFromP}`);
+            if (pointEl) {
+                const topChecker = pointEl.querySelector('.checker:last-child');
+                const rect = (topChecker || pointEl).getBoundingClientRect();
+                fromX = rect.left + rect.width / 2;
+                fromY = rect.top + rect.height / 2;
+            }
+        }
+
+        // Calculate destination position
+        let toX = window.innerWidth / 2;
+        let toY = window.innerHeight / 2;
+
+        if (toPoint === 0 || toPoint === 25) {
+            const isFlipped = (game.gameMode === 'online' && game.myPlayerId === 2);
+            let bearEl;
+            if (isFlipped) {
+                bearEl = (toPoint === 25) ? document.querySelector('.bottom-bear') : document.querySelector('.top-bear');
+            } else {
+                bearEl = (toPoint === 0) ? document.querySelector('.bottom-bear') : document.querySelector('.top-bear');
+            }
+            if (bearEl) {
+                const rect = bearEl.getBoundingClientRect();
+                toX = rect.left + rect.width / 2;
+                toY = rect.top + rect.height / 2;
+            }
+        } else {
+            const displayToP = getDisplayPointFromInternal(toPoint);
+            const pointEl = document.getElementById(`point-${displayToP}`);
+            if (pointEl) {
+                const rect = pointEl.getBoundingClientRect();
+                toX = rect.left + rect.width / 2;
+                const isTop = pointEl.classList.contains('top');
+                const existingCount = game.board[toPoint] ? game.board[toPoint].count : 0;
+                const spacingPx = Math.min(18, 70 / Math.max(1, existingCount + 1)) * existingCount;
+                toY = isTop ? (rect.top + (rect.height * spacingPx / 100) + (realHeight / 2)) : (rect.bottom - (rect.height * spacingPx / 100) - (realHeight / 2));
+            }
+        }
+
+        // Determine player color
+        let player = game.turn;
+        if (fromPoint === "bar") {
+            player = game.turn;
+        } else if (game.board[fromPoint] && game.board[fromPoint].player > 0) {
+            player = game.board[fromPoint].player;
+        }
+
+        const animEl = document.createElement('div');
+        animEl.className = `checker p${player} checker-motion-flying`;
+        animEl.style.width = `${realWidth}px`;
+        animEl.style.height = `${realHeight}px`;
+        animEl.style.left = `${fromX}px`;
+        animEl.style.top = `${fromY}px`;
+        animEl.style.transform = 'translate(-50%, -50%) scale(1.05)';
+        animEl.style.boxShadow = '0 16px 36px rgba(0, 0, 0, 0.85)';
+        animEl.style.transition = 'left 0.45s cubic-bezier(0.25, 1, 0.5, 1), top 0.45s cubic-bezier(0.25, 1, 0.5, 1), transform 0.45s ease';
+        document.body.appendChild(animEl);
+
+        requestAnimationFrame(() => {
+            animEl.style.left = `${toX}px`;
+            animEl.style.top = `${toY}px`;
+            animEl.style.transform = 'translate(-50%, -50%) scale(1.0)';
+        });
+
+        setTimeout(() => {
+            if (animEl.parentNode) {
+                animEl.parentNode.removeChild(animEl);
+            }
+            if (typeof onComplete === 'function') {
+                onComplete();
+            }
+        }, 450);
+    }
+
+    window.animateCheckerMove = animateCheckerMove;
+
+    function onCheckerPointerUp(e) {
+        if (!isDraggingChecker) return;
+
+        window.removeEventListener('pointermove', onCheckerPointerMove);
+        window.removeEventListener('pointerup', onCheckerPointerUp);
+        window.removeEventListener('pointercancel', onCheckerPointerUp);
+
+        document.body.classList.remove('is-dragging-checker');
+
+        const avatar = getOrCreateDragAvatar();
+        avatar.style.display = 'none';
+
+        if (currentHoverTargetEl) {
+            currentHoverTargetEl.classList.remove('drop-hover');
+            currentHoverTargetEl = null;
+        }
+
+        const dist = Math.hypot(e.clientX - dragStartPos.x, e.clientY - dragStartPos.y);
+        const elUnder = document.elementFromPoint(e.clientX, e.clientY);
+        
+        let targetInternalP = null;
+        if (elUnder) {
+            const targetPointEl = elUnder.closest('.point');
+            const targetBearEl = elUnder.closest('.bear-off-zone');
+
+            if (targetPointEl) {
+                const displayP = parseInt(targetPointEl.dataset.point, 10);
+                targetInternalP = getInternalPointFromDisplay(displayP);
+            } else if (targetBearEl) {
+                targetInternalP = parseInt(targetBearEl.dataset.point, 10);
+            }
+        }
+
+        const fromPoint = dragSourcePoint;
+        isDraggingChecker = false;
+        dragSourcePoint = null;
+
+        if (targetInternalP !== null && game.validMoves.includes(targetInternalP)) {
+            // Drop on valid target -> Execute Move directly at drop location
+            game.makeMove(fromPoint, targetInternalP);
+            if (game.gameMode === 'online') {
+                sendSocketMessage('make-move', { from: fromPoint, to: targetInternalP });
+            }
+            game.selectedPoint = -1;
+            game.validMoves = [];
+            renderBoard();
+        } else if (dist > 10) {
+            // Dragged to invalid location -> Cancel Selection
+            game.selectedPoint = -1;
+            game.validMoves = [];
+            renderBoard();
+        } else {
+            // Short tap without dragging -> keep selected for tap-tap fallback
+            renderBoard();
+        }
+    }
+
+    // =========================================================================
     // =========================== RENDERING ===================================
     // =========================================================================
 
@@ -255,7 +562,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 checker.className = `checker p${point.player}`;
 
                 if (i === count - 1) {
-                    if (isSelectable) checker.classList.add('selectable');
+                    if (isSelectable) {
+                        checker.classList.add('selectable');
+                        attachDragListeners(checker, internalP);
+                    }
                     if (isSelected) checker.classList.add('selected');
                 }
 
@@ -357,7 +667,10 @@ document.addEventListener('DOMContentLoaded', () => {
             checker.className = `checker p${player}`;
             
             if (i === count - 1) {
-                if (isSelectable) checker.classList.add('selectable');
+                if (isSelectable) {
+                    checker.classList.add('selectable');
+                    attachDragListeners(checker, "bar");
+                }
                 if (isSelected) checker.classList.add('selected');
             }
 
@@ -393,8 +706,11 @@ document.addEventListener('DOMContentLoaded', () => {
             bearEl.classList.add('valid-target');
             bearEl.onclick = () => {
                 if (game.selectedPoint !== -1 && !game.isGameOver) {
-                    game.makeMove(game.selectedPoint, targetVal);
-                    renderBoard();
+                    const fromP = game.selectedPoint;
+                    animateCheckerMove(fromP, targetVal, () => {
+                        game.makeMove(fromP, targetVal);
+                        renderBoard();
+                    });
                 }
             };
         } else {
@@ -540,10 +856,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const isFlipped = (game.gameMode === 'online' && game.myPlayerId === 2);
         const internalP = isFlipped ? (25 - p) : p;
 
-        // 1. Move Execution
+        // 1. Move Execution with Gliding Motion
         if (game.selectedPoint !== -1 && game.validMoves.includes(internalP)) {
-            game.makeMove(game.selectedPoint, internalP);
-            renderBoard();
+            const fromP = game.selectedPoint;
+            animateCheckerMove(fromP, internalP, () => {
+                game.makeMove(fromP, internalP);
+                if (game.gameMode === 'online') {
+                    sendSocketMessage('make-move', { from: fromP, to: internalP });
+                }
+                game.selectedPoint = -1;
+                game.validMoves = [];
+                renderBoard();
+            });
             return;
         }
 
